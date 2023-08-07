@@ -1,19 +1,56 @@
 from deepl.hacks import generate_timestamp
-from deepl.settings import MAGIC_NUMBER, SUPPORTED_FORMALITY_TONES
+from deepl.settings import MAGIC_NUMBER, SUPPORTED_FORMALITY_TONES,HEADERS
 
 
-def generate_split_sentences_request_data(text, identifier=MAGIC_NUMBER, **kwargs):
+def generate_splquitit_sentences_request_data(text):
     return {
         "jsonrpc": "2.0",
-        "method": "LMT_split_into_sentences",
+        "method": "LMT_split_text",
         "params": {
             "texts": [text],
-            "lang": {"lang_user_selected": "auto", "user_preferred_langs": []},
+            "commonJobParams": {
+            "mode": "translate" 
+            },
         },
-        "id": identifier,
+            "lang": {
+        "lang_user_selected": "auto",
+        "preference": {
+            "DE": 0.17468,
+            "EN": 2.35799,
+            "ES": 0.09085,
+            "FR": 0.13127,
+            "IT": 0.0254,
+            "JA": 0.03672,
+            "NL": 0.02493,
+            "PL": 0.01293,
+            "PT": 0.01336,
+            "RU": 0.01489,
+            "ZH": 0.37636,
+            "BG": 0,
+            "CS": 0,
+            "DA": 0,
+            "EL": 0,
+            "ET": 0,
+            "FI": 0,
+            "HU": 0,
+            "ID": 0,
+            "LV": 0,
+            "LT": 0,
+            "RO": 0,
+            "SK": 0,
+            "SL": 0,
+            "SV": 0,
+            "TR": 0,
+            "UK": 0,
+            "KO": 0,
+            "NB": 0
+        },
+        "default": "default"
+    },
+
     }
 
-
+#生成请求参数里的job参数
 def generate_jobs(sentences, beams=1):
     jobs = []
     for idx, sentence in enumerate(sentences):
@@ -52,7 +89,7 @@ def generate_translation_request_data(
         "params": {
             "jobs": generate_jobs(sentences, beams=alternatives),
             "lang": {
-                "user_preferred_langs": [target_language, source_language],
+                "preference": {"weight": {}, "default": "default"},
                 "source_lang_computed": source_language,
                 "target_lang": target_language,
             },
