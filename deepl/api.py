@@ -1,62 +1,38 @@
-import json
-
 import requests
-
-from deepl.extractors import extract_split_sentences, extract_translated_sentences
-from deepl.generators import (
-    generate_split_sentences_request_data,
-    generate_translation_request_data,
-)
 from deepl.settings import API_URL
+from deepl.settings import get_headers
+
+from deepl.generators import genertate_body_basic
+from deepl.extractors import extract_translated_sentences
+
 from deepl.utils import abbreviate_language
 
-headers = {
-    "accept": "*/*",
-    "accept-language": "en-US;q=0.8,en;q=0.7",
-    "authority": "www2.deepl.com",
-    "content-type": "application/json",
-    "origin": "https://www.deepl.com",
-    "referer": "https://www.deepl.com/translator",
-    "sec-fetch-dest": "empty",
-    "sec-fetch-mode": "cors",
-    "sec-fetch-site": "same-site",
-    "user-agent": (
-        "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/83.0.4103.97 Mobile Safari/537.36"
-    ),
-}
+headers = get_headers
 
+def request_translation(source_language, target_language, text_list):
+    data=genertate_body_basic(text_list,source_language, target_language,)
+    # print("request_translation的data值如下")
+    # print(data)
 
-def split_into_sentences(text, **kwargs):
-    data = generate_split_sentences_request_data(text, **kwargs)
-    response = requests.post(API_URL, data=json.dumps(data), headers=headers)
-    response.raise_for_status()
-
-    json_response = response.json()
-    sentences = extract_split_sentences(json_response)
-
-    return sentences
-
-
-def request_translation(source_language, target_language, text, **kwargs):
-    sentences = split_into_sentences(text, **kwargs)
-    data = generate_translation_request_data(
-        source_language, target_language, sentences, **kwargs
-    )
-    response = requests.post(API_URL, data=json.dumps(data), headers=headers)
+    response = requests.post(url=API_URL, headers=get_headers(), json=data)
     return response
 
 
-def translate(source_language, target_language, text, **kwargs):
+def translate(text_list, target_language="FR",source_language="EN",  **kwargs):
     source_language = abbreviate_language(source_language)
     target_language = abbreviate_language(target_language)
+    # print(f"输入的文本为{text_list}")
+    # print("*"*50)
 
-    response = request_translation(source_language, target_language, text, **kwargs)
-    response.raise_for_status()
+    response = request_translation(source_language, target_language, text_list)
 
     json_response = response.json()
-    translated_sentences = extract_translated_sentences(json_response)
-    translated_text = " ".join(translated_sentences)
 
-    return translated_text
+    # print("返回的结果如下：")
+    # print(json_response)
+
+    translated_sentences = extract_translated_sentences(json_response)
+    translated_text = "\n".join(translated_sentences)
+    print(translated_text)
+
+    return
