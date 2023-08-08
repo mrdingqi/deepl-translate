@@ -1,0 +1,210 @@
+****************************************************************************************************
+【需求模块】Video to Audio
+
+输入文件路径：inputFilPath
+输出文件路径：outputFilePath
+
+windows命令: ffmpeg -i inputfileFilePath outputFilePath
+Android命令：
+
+import android.os.AsyncTask;
+
+public class VideoConverterTask extends AsyncTask<Void, Void, Void> {
+    @Override
+    protected Void doInBackground(Void... params) {
+        String inputFilePath = "/path/to/abc.mp4";
+        String outputFilePath = "/path/to/abc.mp3";
+
+        String[] command = {
+            "ffmpeg",
+            "-i",
+            inputFilePath,
+            outputFilePath
+        };
+
+        try {
+            FFmpeg.execute(command);
+        } catch (FFmpegCommandAlreadyRunningException e) {
+            // 处理异常
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+}
+****************************************************************************************************
+【需求模块】VideoConverter
+
+输入文件路径：inputFilPath
+
+输出文件宽高：1920x1080
+输出文件路径：outputFilePath
+
+windows命令: ffmpeg -i inputfileFilePath -vf "scale=1920:1080" outputFilePath
+Android命令：
+要在Android APK中获取FFmpeg的处理进度，你需要使用FFmpeg的FFmpegCallback来监视转换的进度并显示给用户。 android-ffmpeg-java库提供了FFmpegCallback接口，可以让你实现进度回调。以下是一个示例代码，演示如何获取FFmpeg处理进度并在Android应用程序中显示：
+
+首先，在你的Android项目中创建一个VideoConverterTask类，并让它实现FFmpegCallback接口：
+import android.os.AsyncTask;
+import android.util.Log;
+import com.arthenica.mobileffmpeg.Config;
+import com.arthenica.mobileffmpeg.FFmpeg;
+import com.arthenica.mobileffmpeg.FFmpegCallback;
+import com.arthenica.mobileffmpeg.FFmpegExecution;
+import com.arthenica.mobileffmpeg.Level;
+
+public class VideoConverterTask extends AsyncTask<Void, String, Boolean> implements FFmpegCallback {
+    private final String inputFilePath;
+    private final String outputFilePath;
+    private final int targetWidth;
+    private final int targetHeight;
+
+    public VideoConverterTask(String inputFilePath, String outputFilePath, int targetWidth, int targetHeight) {
+        this.inputFilePath = inputFilePath;
+        this.outputFilePath = outputFilePath;
+        this.targetWidth = targetWidth;
+        this.targetHeight = targetHeight;
+    }
+
+    @Override
+    protected Boolean doInBackground(Void... params) {
+        String scaleFilter = String.format("scale=%d:%d", targetWidth, targetHeight);
+
+        String[] command = {
+            "-i",
+            inputFilePath,
+            "-vf",
+            scaleFilter,
+            outputFilePath
+        };
+
+        Config.setLogLevel(Level.AV_LOG_INFO);
+        FFmpegExecution execution = FFmpeg.execute(command, this);
+
+        if (execution.isSuccess()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    protected void onProgressUpdate(String... values) {
+        // 在这里更新进度条或显示进度信息
+        String progressMessage = values[0];
+        Log.d("FFmpegProgress", progressMessage);
+    }
+
+    @Override
+    protected void onPostExecute(Boolean success) {
+        // 在此处处理转换完成后的结果
+        if (success) {
+            // 转换成功
+        } else {
+            // 转换失败
+        }
+    }
+
+    @Override
+    public void onProgress(String message) {
+        publishProgress(message);
+    }
+}
+然后在你的Activity或Fragment中，你可以调用上面的异步任务来执行视频转换，并在进度更新时更新UI：
+VideoConverterTask videoConverterTask = new VideoConverterTask(
+        "/path/to/abc.mp4",
+        "/path/to/output.mp4",
+        1920,
+        1080
+);
+videoConverterTask.execute();
+在上面的示例中，VideoConverterTask实现了FFmpegCallback接口，并将进度信息通过onProgress方法传递给onProgressUpdate方法。在onProgressUpdate方法中，你可以更新进度条或显示进度信息。
+
+请注意，进度信息将以字符串的形式提供，你可以根据实际需要解析这些信息来显示更具体的进度信息。
+
+****************************************************************************************************
+【需求模块】Audio Converter
+输入文件路径：inputFilPath
+
+输出文件比特率：128k
+输出文件路径：outputFilePath
+
+windows命令：-i inputFilPath -b:a 128k outputFilePath
+Android命令：
+import android.os.AsyncTask;
+import com.arthenica.mobileffmpeg.Config;
+import com.arthenica.mobileffmpeg.FFmpeg;
+import com.arthenica.mobileffmpeg.FFmpegCallback;
+import com.arthenica.mobileffmpeg.FFmpegExecution;
+import com.arthenica.mobileffmpeg.Level;
+
+public class AudioCompressorTask extends AsyncTask<Void, String, Boolean> implements FFmpegCallback {
+    private final String inputFilePath;
+    private final String outputFilePath;
+    private final int targetBitrate; // 目标比特率，以比特每秒（bps）为单位
+
+    public AudioCompressorTask(String inputFilePath, String outputFilePath, int targetBitrate) {
+        this.inputFilePath = inputFilePath;
+        this.outputFilePath = outputFilePath;
+        this.targetBitrate = targetBitrate;
+    }
+
+    @Override
+    protected Boolean doInBackground(Void... params) {
+        String[] command = {
+            "-i",
+            inputFilePath,
+            "-b:a",
+            String.valueOf(targetBitrate) + "k", // 将目标比特率转换为字符串并添加"k"后缀表示kbps
+            outputFilePath
+        };
+
+        Config.setLogLevel(Level.AV_LOG_INFO);
+        FFmpegExecution execution = FFmpeg.execute(command, this);
+
+        if (execution.isSuccess()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    protected void onProgressUpdate(String... values) {
+        // 在这里更新进度条或显示进度信息
+        String progressMessage = values[0];
+        Log.d("FFmpegProgress", progressMessage);
+    }
+
+    @Override
+    protected void onPostExecute(Boolean success) {
+        // 在此处处理压缩完成后的结果
+        if (success) {
+            // 压缩成功
+        } else {
+            // 压缩失败
+        }
+    }
+
+    @Override
+    public void onProgress(String message) {
+        publishProgress(message);
+    }
+}
+在你的Activity或Fragment中，你可以调用上面的异步任务来执行音频压缩，并在进度更新时更新UI：
+AudioCompressorTask audioCompressorTask = new AudioCompressorTask(
+        "/path/to/input_audio.mp3",
+        "/path/to/output_compressed_audio.mp3",
+        128 // 设置目标比特率，例如 128 kbps
+);
+audioCompressorTask.execute();
+
+****************************************************************************************************
+【需求模块】Audio Cutter / Video Cutter
+输入文件路径：inputFilPath
+
+输出文件比特率：128k
+输出文件路径：outputFilePath
+
+
+

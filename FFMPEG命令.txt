@@ -1,0 +1,150 @@
+****************************************************************************
+视频处理  输出结果为视频的命令
+
+---windows命令：
+ffmpeg -ss 10.1 -i input.mp4 -t 11.1 -filter_complex "[0:v]setpts=1.5*PTS,scale=1920x1080[v];[0:a]atempo=1.5,asetrate=128000[b]" -map "[v]" -map "[b]" output.mp4
+
+解释每个参数的作用：
+-ss 10.1: 指定从输入视频的第10.1秒开始截取。
+-i input.mp4: 指定输入视频文件名为input.mp4。
+-t 11.1: 指定截取视频的时长为11.1秒，从第10.1秒截取到21.2秒。
+-filter_complex: 这是用于复杂的滤镜操作的选项。
+setpts=1.5*PTS: 将视频的播放速度调整为原来的1.5倍。
+scale=1920x1080: 调整视频画面尺寸为1920x1080。
+atempo=1.5,asetrate=128000: 将音频的播放速度调整为原来的1.5倍，并将音频比特率压缩为128k。
+最后，-map "[v]" -map "[b]" output.mp4 用于指定视频和音频的映射并输出到output.mp4文件中。
+
+请确保将input.mp4替换为你的输入视频文件名，并在执行命令时，确保输入文件和输出文件的路径是正确的。执行命令后，你将得到一个满足要求的输出视频文件output.mp4
+
+
+---Flutter命令：
+import 'package:flutter/material.dart';
+import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
+
+class VideoProcessingPage extends StatefulWidget {
+  @override
+  _VideoProcessingPageState createState() => _VideoProcessingPageState();
+}
+
+class _VideoProcessingPageState extends State<VideoProcessingPage> {
+  final FlutterFFmpeg _flutterFFmpeg = FlutterFFmpeg();
+  String _progress = '';
+
+  @override
+  void dispose() {
+    _flutterFFmpeg.cancel();
+    super.dispose();
+  }
+
+  Future<void> processVideo() async {
+    String command = "-i input.mp4 -ss 10.1 -t 11.1 -filter_complex " +
+        "'[0:v]setpts=1.5*PTS,scale=1920x1080[v];[0:a]atempo=1.5,asetrate=128000[b]' " +
+        "-map '[v]' -map '[b]' output.mp4";
+
+    int returnCode = await _flutterFFmpeg.execute(command, (progress) {
+      setState(() {
+        _progress = 'Processing: ${progress.toStringAsFixed(2)}%';
+      });
+    });
+
+    if (returnCode == 0) {
+      setState(() {
+        _progress = 'Video processing completed!';
+      });
+    } else {
+      setState(() {
+        _progress = 'Video processing failed!';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Video Processing'),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+              onPressed: processVideo,
+              child: Text('Process Video'),
+            ),
+            SizedBox(height: 20),
+            Text(_progress),
+          ],
+        ),
+      ),
+    );
+  }
+}
+****************************************************************************
+声音处理  输出结果为声音的命令
+
+---windows命令：
+ffmpeg -i input.mp3 -ss 10.1 -to 21.2 -filter:a "atempo=1.5" -b:a 128k output.mp3
+
+参数说明：
+-i input.mp3: 指定输入文件为"input.mp3"，请将其替换为你的实际输入文件名和路径。
+-ss 10.1: 从输入文件的第10.1秒开始截取。
+-to 21.2: 截取到输入文件的第21.2秒结束。
+-filter:a "atempo=1.5": 调整音频播放速度为原来的1.5倍。
+-b:a 128k: 压缩音频的比特率为128k。
+output.mp3: 指定输出文件名为"output.mp3"，请将其替换为你的实际输出文件名和路径。
+
+
+
+---Flutter命令：
+import 'package:flutter/material.dart';
+import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
+
+class VideoProcessingScreen extends StatefulWidget {
+  @override
+  _VideoProcessingScreenState createState() => _VideoProcessingScreenState();
+}
+
+class _VideoProcessingScreenState extends State<VideoProcessingScreen> {
+  double _progress = 0.0;
+  FlutterFFmpeg _flutterFFmpeg = FlutterFFmpeg();
+
+  void _startProcessing() async {
+    String inputPath = "path/to/input.mp3"; // 替换为你的输入文件路径
+    String outputPath = "path/to/output.mp3"; // 替换为你的输出文件路径
+
+    String command = "-i $inputPath -ss 10.1 -to 21.2 -filter:a \"atempo=1.5\" -b:a 128k $outputPath";
+
+    int executionId = await _flutterFFmpeg.execute(command);
+
+    _flutterFFmpeg.getLastReceivedProgress().then((progress) {
+      setState(() {
+        _progress = progress.toDouble();
+      });
+    });
+
+    _flutterFFmpeg.getLastReceivedReturnCode().then((returnCode) {
+      // 处理完成后的逻辑
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Video Processing")),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text("Progress: ${(_progress * 100).toStringAsFixed(2)}%"),
+            ElevatedButton(
+              onPressed: _startProcessing,
+              child: Text("Start Processing"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+在上面的代码中，我们使用了FlutterFFmpeg.getLastReceivedProgress()方法来获取处理进度，并在UI上显示出来。getLastReceivedReturnCode()用于在处理完成后获取返回码。

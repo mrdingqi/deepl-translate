@@ -1,3 +1,4 @@
+from itertools import islice
 import requests
 from deepl.settings import API_URL
 from deepl.settings import get_headers
@@ -36,3 +37,16 @@ def translate(text_list, target_language="FR",source_language="EN",  **kwargs):
     print(translated_text)
 
     return
+
+
+def translate_by_file_path(input_file_path, output_file_path,batch_size=400):
+    with open(input_file_path, 'r', encoding="utf8") as file:
+        while True:
+            batch = [line.strip() for line in islice(file, batch_size)]
+            if not batch:
+                break
+            print("*" * 50)
+            print("\n".join(batch))
+            # 在这里对批处理的数据进行处理
+            # 你可以在这里执行你想要的操作，比如写入其他文件或进行其他计算。
+            pass
