@@ -8,6 +8,11 @@ from deepl.extractors import extract_translated_sentences
 
 from deepl.utils import abbreviate_language
 
+import time
+def time_print(message):
+    current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+    print(f"[{current_time}] {message}")
+
 headers = get_headers
 
 def request_translation(source_language, target_language, text_list):
@@ -19,7 +24,7 @@ def request_translation(source_language, target_language, text_list):
     return response
 
 
-def translate(text_list, target_language="FR",source_language="EN",  **kwargs):
+def translate(text_list, target_language="FR",source_language="EN",  **kwargs)->str:
     source_language = abbreviate_language(source_language)
     target_language = abbreviate_language(target_language)
     # print(f"输入的文本为{text_list}")
@@ -34,19 +39,29 @@ def translate(text_list, target_language="FR",source_language="EN",  **kwargs):
 
     translated_sentences = extract_translated_sentences(json_response)
     translated_text = "\n".join(translated_sentences)
-    print(translated_text)
+    # print(translated_text)
 
-    return
+    return translated_text
 
 
 def translate_by_file_path(input_file_path, output_file_path,batch_size=400):
+    seq=1
     with open(input_file_path, 'r', encoding="utf8") as file:
         while True:
+            time_print(f"准备处理第{seq}批文字，每批{batch_size}行")
+            
             batch = [line.strip() for line in islice(file, batch_size)]
             if not batch:
                 break
-            print("*" * 50)
-            print("\n".join(batch))
+            translated_text=translate(batch)
+            with open(output_file_path,"a+",encoding="utf8") as file:
+                file.write(translated_text)
+            time_print(f"处理完毕第{seq}批文字，每批{batch_size}行")
+            print("*"*50)
+            print("\n")
+            seq+=1
+            # print("*" * 50)
+            # print("\n".join(batch))
             # 在这里对批处理的数据进行处理
             # 你可以在这里执行你想要的操作，比如写入其他文件或进行其他计算。
             pass
